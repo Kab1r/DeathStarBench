@@ -1,5 +1,4 @@
 name: unique-id-service
-dockerRegistry: ghcr.io
 
 ports:
   - port: 9090
@@ -7,6 +6,7 @@ ports:
 
 container:
   command: UniqueIdService
+  dockerRegistry: ghcr.io
   image: kab1r/deathstarbench/social-network-microservices
   name: unique-id-service
   ports: 

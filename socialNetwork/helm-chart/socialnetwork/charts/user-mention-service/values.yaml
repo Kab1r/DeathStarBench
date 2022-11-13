@@ -1,5 +1,4 @@
 name: user-mention-service
-dockerRegistry: ghcr.io
 
 ports:
   - port: 9090
@@ -7,6 +6,7 @@ ports:
 
 container:
   command: UserMentionService
+  dockerRegistry: ghcr.io
   image: kab1r/deathstarbench/social-network-microservices
   name: user-mention-service
   ports: 

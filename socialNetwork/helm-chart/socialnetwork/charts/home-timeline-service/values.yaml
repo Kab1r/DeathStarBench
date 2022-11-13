@@ -1,5 +1,4 @@
 name: home-timeline-service
-dockerRegistry: ghcr.io
 
 ports:
   - port: 9090
@@ -7,6 +6,7 @@ ports:
 
 container:
   command: HomeTimelineService
+  dockerRegistry: ghcr.io
   image: kab1r/deathstarbench/social-network-microservices
   name: home-timeline-service
   ports: 

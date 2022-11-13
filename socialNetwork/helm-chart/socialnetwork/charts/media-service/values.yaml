@@ -1,5 +1,4 @@
 name: media-service
-dockerRegistry: ghcr.io
 
 ports:
   - port: 9090
@@ -7,6 +6,7 @@ ports:
 
 container:
   command: MediaService
+  dockerRegistry: ghcr.io
   image: kab1r/deathstarbench/social-network-microservices
   name: media-service
   ports: 
