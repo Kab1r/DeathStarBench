@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: deathstarbench/social-network-microservices
+        image: ghcr.io/kab1r/deathstarbench/social-network-microservices
         command: ["UserService"]
         volumeMounts:
           - mountPath: /social-network-microservices/config/jaeger-config.yml

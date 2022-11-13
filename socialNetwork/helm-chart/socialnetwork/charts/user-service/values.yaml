@@ -6,7 +6,7 @@ ports:
 
 container:
   command: UserService
-  image: deathstarbench/social-network-microservices
+  image: ghcr.io/kab1r/deathstarbench/social-network-microservices
   name: user-service
   ports: 
   - containerPort: 9090

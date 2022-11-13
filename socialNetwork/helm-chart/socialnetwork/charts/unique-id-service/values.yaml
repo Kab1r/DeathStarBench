@@ -6,7 +6,7 @@ ports:
 
 container:
   command: UniqueIdService
-  image: deathstarbench/social-network-microservices
+  image: ghcr.io/kab1r/deathstarbench/social-network-microservices
   name: unique-id-service
   ports: 
   - containerPort: 9090
