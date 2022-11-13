@@ -272,11 +272,13 @@ void UserTimelineHandler::ReadUserTimeline(
   START_SPAN(post_future, span);
   std::future<std::vector<Post>> post_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(post_future_inner, post_future_span);
         auto post_client_wrapper = _post_client_pool->Pop();
         if (!post_client_wrapper) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
           se.message = "Failed to connect to post-storage-service";
+          FINISH_SPAN(post_future_inner);
           throw se;
         }
         std::vector<Post> _return_posts;
@@ -287,9 +289,11 @@ void UserTimelineHandler::ReadUserTimeline(
         } catch (...) {
           _post_client_pool->Remove(post_client_wrapper);
           LOG(error) << "Failed to read posts from post-storage-service";
+          FINISH_SPAN(post_future_inner);
           throw;
         }
         _post_client_pool->Keepalive(post_client_wrapper);
+        FINISH_SPAN(post_future_inner);
         return _return_posts;
       });
 

@@ -95,12 +95,15 @@ void SocialGraphHandler::Follow(
   START_SPAN(mongo_update_follower_future, span);
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(mongo_update_follower_future_inner,
+                   mongo_update_follower_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to pop a client from MongoDB pool";
+          FINISH_SPAN(mongo_update_follower_future_inner);
           throw se;
         }
         auto collection = mongoc_client_get_collection(
@@ -110,6 +113,7 @@ void SocialGraphHandler::Follow(
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to create collection social_graph from MongoDB";
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_follower_future_inner);
           throw se;
         }
 
@@ -125,7 +129,9 @@ void SocialGraphHandler::Follow(
         bson_error_t error;
         bson_t reply;
         auto update_span = opentracing::Tracer::Global()->StartSpan(
-            "mongo_update_client", {opentracing::ChildOf(&span->context())});
+            "mongo_update_client",
+            {opentracing::ChildOf(
+                &mongo_update_follower_future_span->context())});
         bool updated = mongoc_collection_find_and_modify(
             collection, search_not_exist, nullptr, update, nullptr, false,
             false, true, &reply, &error);
@@ -140,6 +146,7 @@ void SocialGraphHandler::Follow(
           bson_destroy(search_not_exist);
           mongoc_collection_destroy(collection);
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_follower_future_inner);
           throw se;
         }
         update_span->Finish();
@@ -148,17 +155,21 @@ void SocialGraphHandler::Follow(
         bson_destroy(search_not_exist);
         mongoc_collection_destroy(collection);
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+        FINISH_SPAN(mongo_update_follower_future_inner);
       });
 
   START_SPAN(mongo_update_followee_future, span);
   std::future<void> mongo_update_followee_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(mongo_update_followee_future_inner,
+                   mongo_update_followee_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to pop a client from MongoDB pool";
+          FINISH_SPAN(mongo_update_followee_future_inner);
           throw se;
         }
         auto collection = mongoc_client_get_collection(
@@ -168,6 +179,7 @@ void SocialGraphHandler::Follow(
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to create collection social_graph from MongoDB";
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_followee_future_inner);
           throw se;
         }
 
@@ -182,7 +194,8 @@ void SocialGraphHandler::Follow(
         bson_error_t error;
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_update_client",
-            {opentracing::ChildOf(&span->context())});
+            {opentracing::ChildOf(
+                &mongo_update_followee_future_inner_span->context())});
         bson_t reply;
         bool updated = mongoc_collection_find_and_modify(
             collection, search_not_exist, nullptr, update, nullptr, false,
@@ -198,6 +211,7 @@ void SocialGraphHandler::Follow(
           bson_destroy(search_not_exist);
           mongoc_collection_destroy(collection);
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_followee_future_inner);
           throw se;
         }
         update_span->Finish();
@@ -206,13 +220,14 @@ void SocialGraphHandler::Follow(
         bson_destroy(search_not_exist);
         mongoc_collection_destroy(collection);
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+        FINISH_SPAN(mongo_update_followee_future_inner);
       });
 
   START_SPAN(redis_update_future, span);
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
-        {opentracing::ChildOf(&span->context())});
+        {opentracing::ChildOf(&redis_update_future_span->context())});
 
     {
       if (_redis_client_pool) {
@@ -282,12 +297,15 @@ void SocialGraphHandler::Unfollow(
   START_SPAN(mongo_update_follower_future, span);
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(mongo_update_follower_future_inner,
+                   mongo_update_follower_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to pop a client from MongoDB pool";
+          FINISH_SPAN(mongo_update_follower_future_inner);
           throw se;
         }
         auto collection = mongoc_client_get_collection(
@@ -297,6 +315,7 @@ void SocialGraphHandler::Unfollow(
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to create collection social_graph from MongoDB";
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_follower_future_inner);
           throw se;
         }
         bson_t *query = bson_new();
@@ -309,7 +328,8 @@ void SocialGraphHandler::Unfollow(
         bson_error_t error;
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_delete_client",
-            {opentracing::ChildOf(&span->context())});
+            {opentracing::ChildOf(
+                &mongo_update_follower_future_inner_span->context())});
         bool updated = mongoc_collection_find_and_modify(
             collection, query, nullptr, update, nullptr, false, false, true,
             &reply, &error);
@@ -324,6 +344,7 @@ void SocialGraphHandler::Unfollow(
           bson_destroy(&reply);
           mongoc_collection_destroy(collection);
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_follower_future_inner);
           throw se;
         }
         update_span->Finish();
@@ -332,17 +353,21 @@ void SocialGraphHandler::Unfollow(
         bson_destroy(&reply);
         mongoc_collection_destroy(collection);
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+        FINISH_SPAN(mongo_update_follower_future_inner);
       });
 
   START_SPAN(mongo_update_followee_future, span);
   std::future<void> mongo_update_followee_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(mongo_update_followee_future_inner,
+                   mongo_update_followee_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to pop a client from MongoDB pool";
+          FINISH_SPAN(mongo_update_followee_future_inner);
           throw se;
         }
         auto collection = mongoc_client_get_collection(
@@ -352,6 +377,7 @@ void SocialGraphHandler::Unfollow(
           se.errorCode = ErrorCode::SE_MONGODB_ERROR;
           se.message = "Failed to create collection social_graph from MongoDB";
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_followee_future_inner);
           throw se;
         }
         bson_t *query = bson_new();
@@ -364,7 +390,8 @@ void SocialGraphHandler::Unfollow(
         bson_error_t error;
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_delete_client",
-            {opentracing::ChildOf(&span->context())});
+            {opentracing::ChildOf(
+                &mongo_update_followee_future_inner_span->context())});
         bool updated = mongoc_collection_find_and_modify(
             collection, query, nullptr, update, nullptr, false, false, true,
             &reply, &error);
@@ -379,6 +406,7 @@ void SocialGraphHandler::Unfollow(
           bson_destroy(&reply);
           mongoc_collection_destroy(collection);
           mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+          FINISH_SPAN(mongo_update_followee_future_inner);
           throw se;
         }
         update_span->Finish();
@@ -387,13 +415,14 @@ void SocialGraphHandler::Unfollow(
         bson_destroy(&reply);
         mongoc_collection_destroy(collection);
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+        FINISH_SPAN(mongo_update_followee_future_inner);
       });
 
   START_SPAN(redis_update_future, span);
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
-        {opentracing::ChildOf(&span->context())});
+        {opentracing::ChildOf(&redis_update_future_span->context())});
     {
       if (_redis_client_pool) {
         auto pipe = _redis_client_pool->pipeline(false);
@@ -778,11 +807,13 @@ void SocialGraphHandler::FollowWithUsername(
 
   START_SPAN(user_id_future, span);
   std::future<int64_t> user_id_future = std::async(std::launch::async, [&]() {
+    START_SPAN(user_id_future_inner, user_id_future_span);
     auto user_client_wrapper = _user_service_client_pool->Pop();
     if (!user_client_wrapper) {
       ServiceException se;
       se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
       se.message = "Failed to connect to social-graph-service";
+      FINISH_SPAN(user_id_future_inner);
       throw se;
     }
     auto user_client = user_client_wrapper->GetClient();
@@ -792,20 +823,24 @@ void SocialGraphHandler::FollowWithUsername(
     } catch (...) {
       _user_service_client_pool->Remove(user_client_wrapper);
       LOG(error) << "Failed to get user_id from user-service";
+      FINISH_SPAN(user_id_future_inner);
       throw;
     }
     _user_service_client_pool->Keepalive(user_client_wrapper);
+    FINISH_SPAN(user_id_future_inner);
     return _return;
   });
 
   START_SPAN(followee_id_future, span);
   std::future<int64_t> followee_id_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(followee_id_future_inner, followee_id_future_span);
         auto user_client_wrapper = _user_service_client_pool->Pop();
         if (!user_client_wrapper) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
           se.message = "Failed to connect to social-graph-service";
+          FINISH_SPAN(followee_id_future_inner);
           throw se;
         }
         auto user_client = user_client_wrapper->GetClient();
@@ -816,9 +851,11 @@ void SocialGraphHandler::FollowWithUsername(
         } catch (...) {
           _user_service_client_pool->Remove(user_client_wrapper);
           LOG(error) << "Failed to get user_id from user-service";
+          FINISH_SPAN(followee_id_future_inner);
           throw;
         }
         _user_service_client_pool->Keepalive(user_client_wrapper);
+        FINISH_SPAN(followee_id_future_inner);
         return _return;
       });
 
@@ -856,11 +893,13 @@ void SocialGraphHandler::UnfollowWithUsername(
 
   START_SPAN(user_id_future, span);
   std::future<int64_t> user_id_future = std::async(std::launch::async, [&]() {
+    START_SPAN(user_id_future_inner, user_id_future_span);
     auto user_client_wrapper = _user_service_client_pool->Pop();
     if (!user_client_wrapper) {
       ServiceException se;
       se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
       se.message = "Failed to connect to social-graph-service";
+      FINISH_SPAN(user_id_future_inner);
       throw se;
     }
     auto user_client = user_client_wrapper->GetClient();
@@ -870,20 +909,24 @@ void SocialGraphHandler::UnfollowWithUsername(
     } catch (...) {
       _user_service_client_pool->Remove(user_client_wrapper);
       LOG(error) << "Failed to get user_id from user-service";
+      FINISH_SPAN(user_id_future_inner);
       throw;
     }
     _user_service_client_pool->Keepalive(user_client_wrapper);
+    FINISH_SPAN(user_id_future_inner);
     return _return;
   });
 
   START_SPAN(followee_id_future, span);
   std::future<int64_t> followee_id_future =
       std::async(std::launch::async, [&]() {
+        START_SPAN(followee_id_future_inner, followee_id_future_span);
         auto user_client_wrapper = _user_service_client_pool->Pop();
         if (!user_client_wrapper) {
           ServiceException se;
           se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
           se.message = "Failed to connect to social-graph-service";
+          FINISH_SPAN(followee_id_future_inner);
           throw se;
         }
         auto user_client = user_client_wrapper->GetClient();
@@ -894,9 +937,11 @@ void SocialGraphHandler::UnfollowWithUsername(
         } catch (...) {
           _user_service_client_pool->Remove(user_client_wrapper);
           LOG(error) << "Failed to get user_id from user-service";
+          FINISH_SPAN(followee_id_future_inner);
           throw;
         }
         _user_service_client_pool->Keepalive(user_client_wrapper);
+        FINISH_SPAN(followee_id_future_inner);
         return _return;
       });
 

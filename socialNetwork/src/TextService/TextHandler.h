@@ -73,7 +73,8 @@ void TextHandler::ComposeText(
   START_SPAN(shortened_urls_future, span);
   auto shortened_urls_future = std::async(std::launch::async, [&]() {
     auto url_span = opentracing::Tracer::Global()->StartSpan(
-        "compose_urls_client", {opentracing::ChildOf(&span->context())});
+        "compose_urls_client",
+        {opentracing::ChildOf(&shortened_urls_future_span->context())});
 
     std::map<std::string, std::string> url_writer_text_map;
     TextMapWriter url_writer(url_writer_text_map);
@@ -103,7 +104,7 @@ void TextHandler::ComposeText(
   auto user_mention_future = std::async(std::launch::async, [&]() {
     auto user_mention_span = opentracing::Tracer::Global()->StartSpan(
         "compose_user_mentions_client",
-        {opentracing::ChildOf(&span->context())});
+        {opentracing::ChildOf(&user_mention_future_span->context())});
 
     std::map<std::string, std::string> user_mention_writer_text_map;
     TextMapWriter user_mention_writer(user_mention_writer_text_map);

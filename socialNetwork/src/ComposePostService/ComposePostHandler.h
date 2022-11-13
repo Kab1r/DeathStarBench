@@ -376,18 +376,23 @@ void ComposePostHandler::ComposePost(
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   START_SPAN(text_future, span);
+  opentracing::Tracer::Global()->Inject(text_future_span->context(), writer);
   auto text_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeTextHelper,
                  this, req_id, text, writer_text_map);
   START_SPAN(creator_future, span);
+  opentracing::Tracer::Global()->Inject(creator_future_span->context(), writer);
   auto creator_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeCreaterHelper,
                  this, req_id, user_id, username, writer_text_map);
   START_SPAN(media_future, span);
+  opentracing::Tracer::Global()->Inject(media_future_span->context(), writer);
   auto media_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeMediaHelper,
                  this, req_id, media_types, media_ids, writer_text_map);
   START_SPAN(unique_id_future, span);
+  opentracing::Tracer::Global()->Inject(unique_id_future_span->context(),
+                                        writer);
   auto unique_id_future = std::async(
       std::launch::async, &ComposePostHandler::_ComposeUniqueIdHelper, this,
       req_id, post_type, writer_text_map);
