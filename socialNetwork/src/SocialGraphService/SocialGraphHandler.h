@@ -28,7 +28,7 @@ using std::chrono::milliseconds;
 using std::chrono::system_clock;
 
 class SocialGraphHandler : public SocialGraphServiceIf {
- public:
+public:
   SocialGraphHandler(mongoc_client_pool_t *, Redis *,
                      ClientPool<ThriftClient<UserServiceClient>> *);
   SocialGraphHandler(mongoc_client_pool_t *, RedisCluster *,
@@ -44,13 +44,13 @@ class SocialGraphHandler : public SocialGraphServiceIf {
                 const std::map<std::string, std::string> &) override;
   void FollowWithUsername(int64_t, const std::string &, const std::string &,
                           const std::map<std::string, std::string> &) override;
-  void UnfollowWithUsername(
-      int64_t, const std::string &, const std::string &,
-      const std::map<std::string, std::string> &) override;
+  void
+  UnfollowWithUsername(int64_t, const std::string &, const std::string &,
+                       const std::map<std::string, std::string> &) override;
   void InsertUser(int64_t, int64_t,
                   const std::map<std::string, std::string> &) override;
 
- private:
+private:
   mongoc_client_pool_t *_mongodb_client_pool;
   Redis *_redis_client_pool;
   RedisCluster *_redis_cluster_client_pool;
@@ -92,6 +92,7 @@ void SocialGraphHandler::Follow(
       duration_cast<milliseconds>(system_clock::now().time_since_epoch())
           .count();
 
+  START_SPAN(mongo_update_follower_future, span);
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
         mongoc_client_t *mongodb_client =
@@ -149,6 +150,7 @@ void SocialGraphHandler::Follow(
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
       });
 
+  START_SPAN(mongo_update_followee_future, span);
   std::future<void> mongo_update_followee_future =
       std::async(std::launch::async, [&]() {
         mongoc_client_t *mongodb_client =
@@ -206,6 +208,7 @@ void SocialGraphHandler::Follow(
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
       });
 
+  START_SPAN(redis_update_future, span);
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
@@ -249,8 +252,11 @@ void SocialGraphHandler::Follow(
 
   try {
     redis_update_future.get();
+    FINISH_SPAN(redis_update_future);
     mongo_update_follower_future.get();
+    FINISH_SPAN(mongo_update_follower_future);
     mongo_update_followee_future.get();
+    FINISH_SPAN(mongo_update_followee_future);
   } catch (const std::exception &e) {
     LOG(warning) << e.what();
     throw;
@@ -273,6 +279,7 @@ void SocialGraphHandler::Unfollow(
       "unfollow_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
+  START_SPAN(mongo_update_follower_future, span);
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
         mongoc_client_t *mongodb_client =
@@ -327,6 +334,7 @@ void SocialGraphHandler::Unfollow(
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
       });
 
+  START_SPAN(mongo_update_followee_future, span);
   std::future<void> mongo_update_followee_future =
       std::async(std::launch::async, [&]() {
         mongoc_client_t *mongodb_client =
@@ -381,6 +389,7 @@ void SocialGraphHandler::Unfollow(
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
       });
 
+  START_SPAN(redis_update_future, span);
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
@@ -418,8 +427,11 @@ void SocialGraphHandler::Unfollow(
 
   try {
     redis_update_future.get();
+    FINISH_SPAN(redis_update_future);
     mongo_update_follower_future.get();
+    FINISH_SPAN(mongo_update_follower_future);
     mongo_update_followee_future.get();
+    FINISH_SPAN(mongo_update_followee_future);
   } catch (...) {
     throw;
   }
@@ -764,6 +776,7 @@ void SocialGraphHandler::FollowWithUsername(
       {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
+  START_SPAN(user_id_future, span);
   std::future<int64_t> user_id_future = std::async(std::launch::async, [&]() {
     auto user_client_wrapper = _user_service_client_pool->Pop();
     if (!user_client_wrapper) {
@@ -785,6 +798,7 @@ void SocialGraphHandler::FollowWithUsername(
     return _return;
   });
 
+  START_SPAN(followee_id_future, span);
   std::future<int64_t> followee_id_future =
       std::async(std::launch::async, [&]() {
         auto user_client_wrapper = _user_service_client_pool->Pop();
@@ -812,7 +826,9 @@ void SocialGraphHandler::FollowWithUsername(
   int64_t followee_id;
   try {
     user_id = user_id_future.get();
+    FINISH_SPAN(user_id_future);
     followee_id = followee_id_future.get();
+    FINISH_SPAN(followee_id_future);
   } catch (const std::exception &e) {
     LOG(warning) << e.what();
     throw;
@@ -838,6 +854,7 @@ void SocialGraphHandler::UnfollowWithUsername(
       {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
+  START_SPAN(user_id_future, span);
   std::future<int64_t> user_id_future = std::async(std::launch::async, [&]() {
     auto user_client_wrapper = _user_service_client_pool->Pop();
     if (!user_client_wrapper) {
@@ -859,6 +876,7 @@ void SocialGraphHandler::UnfollowWithUsername(
     return _return;
   });
 
+  START_SPAN(followee_id_future, span);
   std::future<int64_t> followee_id_future =
       std::async(std::launch::async, [&]() {
         auto user_client_wrapper = _user_service_client_pool->Pop();
@@ -886,7 +904,9 @@ void SocialGraphHandler::UnfollowWithUsername(
   int64_t followee_id;
   try {
     user_id = user_id_future.get();
+    FINISH_SPAN(user_id_future);
     followee_id = followee_id_future.get();
+    FINISH_SPAN(followee_id_future);
   } catch (...) {
     throw;
   }
@@ -901,6 +921,6 @@ void SocialGraphHandler::UnfollowWithUsername(
   span->Finish();
 }
 
-}  // namespace social_network
+} // namespace social_network
 
-#endif  // SOCIAL_NETWORK_MICROSERVICES_SOCIALGRAPHHANDLER_H
+#endif // SOCIAL_NETWORK_MICROSERVICES_SOCIALGRAPHHANDLER_H

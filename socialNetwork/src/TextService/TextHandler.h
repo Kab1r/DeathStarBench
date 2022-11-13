@@ -17,7 +17,7 @@
 namespace social_network {
 
 class TextHandler : public TextServiceIf {
- public:
+public:
   TextHandler(ClientPool<ThriftClient<UrlShortenServiceClient>> *,
               ClientPool<ThriftClient<UserMentionServiceClient>> *);
   ~TextHandler() override = default;
@@ -25,7 +25,7 @@ class TextHandler : public TextServiceIf {
   void ComposeText(TextServiceReturn &_return, int64_t, const std::string &,
                    const std::map<std::string, std::string> &) override;
 
- private:
+private:
   ClientPool<ThriftClient<UrlShortenServiceClient>> *_url_client_pool;
   ClientPool<ThriftClient<UserMentionServiceClient>> *_user_mention_client_pool;
 };
@@ -70,6 +70,7 @@ void TextHandler::ComposeText(
     s = m.suffix().str();
   }
 
+  START_SPAN(shortened_urls_future, span);
   auto shortened_urls_future = std::async(std::launch::async, [&]() {
     auto url_span = opentracing::Tracer::Global()->StartSpan(
         "compose_urls_client", {opentracing::ChildOf(&span->context())});
@@ -98,6 +99,7 @@ void TextHandler::ComposeText(
     return _return_urls;
   });
 
+  START_SPAN(user_mention_future, span);
   auto user_mention_future = std::async(std::launch::async, [&]() {
     auto user_mention_span = opentracing::Tracer::Global()->StartSpan(
         "compose_user_mentions_client",
@@ -134,6 +136,7 @@ void TextHandler::ComposeText(
   std::vector<Url> target_urls;
   try {
     target_urls = shortened_urls_future.get();
+    FINISH_SPAN(shortened_urls_future);
   } catch (...) {
     LOG(error) << "Failed to get shortened urls from url-shorten-service";
     throw;
@@ -142,6 +145,7 @@ void TextHandler::ComposeText(
   std::vector<UserMention> user_mentions;
   try {
     user_mentions = user_mention_future.get();
+    FINISH_SPAN(user_mention_future);
   } catch (...) {
     LOG(error) << "Failed to upload user mentions to user-mention-service";
     throw;
@@ -168,6 +172,6 @@ void TextHandler::ComposeText(
   span->Finish();
 }
 
-}  // namespace social_network
+} // namespace social_network
 
-#endif  // SOCIAL_NETWORK_MICROSERVICES_TEXTHANDLER_H
+#endif // SOCIAL_NETWORK_MICROSERVICES_TEXTHANDLER_H

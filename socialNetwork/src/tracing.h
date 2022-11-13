@@ -12,6 +12,17 @@
 #include <map>
 #include "logger.h"
 
+#define FINISH_SPAN(name) name##_span->Finish();
+
+#define DECLARE_SPAN(name) std::unique_ptr<opentracing::Span> name##_span;
+#define START_EXISTING_SPAN(name, parent_span)                   \
+  name##_span = opentracing::Tracer::Global()->StartSpan(        \
+      #name, {opentracing::ChildOf(&parent_span->context())});
+
+#define START_SPAN(name, parent_span)                            \
+  auto name##_span = opentracing::Tracer::Global()->StartSpan(   \
+      #name, {opentracing::ChildOf(&parent_span->context())});
+
 namespace social_network {
 
 using opentracing::expected;

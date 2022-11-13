@@ -29,7 +29,7 @@ using std::chrono::milliseconds;
 using std::chrono::system_clock;
 
 class ComposePostHandler : public ComposePostServiceIf {
- public:
+public:
   ComposePostHandler(ClientPool<ThriftClient<PostStorageServiceClient>> *,
                      ClientPool<ThriftClient<UserTimelineServiceClient>> *,
                      ClientPool<ThriftClient<UserServiceClient>> *,
@@ -46,7 +46,7 @@ class ComposePostHandler : public ComposePostServiceIf {
                    PostType::type post_type,
                    const std::map<std::string, std::string> &carrier) override;
 
- private:
+private:
   ClientPool<ThriftClient<PostStorageServiceClient>> *_post_storage_client_pool;
   ClientPool<ThriftClient<UserTimelineServiceClient>>
       *_user_timeline_client_pool;
@@ -59,31 +59,35 @@ class ComposePostHandler : public ComposePostServiceIf {
   ClientPool<ThriftClient<HomeTimelineServiceClient>>
       *_home_timeline_client_pool;
 
-  void _UploadUserTimelineHelper(
-      int64_t req_id, int64_t post_id, int64_t user_id, int64_t timestamp,
-      const std::map<std::string, std::string> &carrier);
+  void
+  _UploadUserTimelineHelper(int64_t req_id, int64_t post_id, int64_t user_id,
+                            int64_t timestamp,
+                            const std::map<std::string, std::string> &carrier);
 
   void _UploadPostHelper(int64_t req_id, const Post &post,
                          const std::map<std::string, std::string> &carrier);
 
-  void _UploadHomeTimelineHelper(
-      int64_t req_id, int64_t post_id, int64_t user_id, int64_t timestamp,
-      const std::vector<int64_t> &user_mentions_id,
-      const std::map<std::string, std::string> &carrier);
+  void
+  _UploadHomeTimelineHelper(int64_t req_id, int64_t post_id, int64_t user_id,
+                            int64_t timestamp,
+                            const std::vector<int64_t> &user_mentions_id,
+                            const std::map<std::string, std::string> &carrier);
 
-  Creator _ComposeCreaterHelper(
-      int64_t req_id, int64_t user_id, const std::string &username,
-      const std::map<std::string, std::string> &carrier);
-  TextServiceReturn _ComposeTextHelper(
-      int64_t req_id, const std::string &text,
-      const std::map<std::string, std::string> &carrier);
-  std::vector<Media> _ComposeMediaHelper(
-      int64_t req_id, const std::vector<std::string> &media_types,
-      const std::vector<int64_t> &media_ids,
-      const std::map<std::string, std::string> &carrier);
-  int64_t _ComposeUniqueIdHelper(
-      int64_t req_id, PostType::type post_type,
-      const std::map<std::string, std::string> &carrier);
+  Creator
+  _ComposeCreaterHelper(int64_t req_id, int64_t user_id,
+                        const std::string &username,
+                        const std::map<std::string, std::string> &carrier);
+  TextServiceReturn
+  _ComposeTextHelper(int64_t req_id, const std::string &text,
+                     const std::map<std::string, std::string> &carrier);
+  std::vector<Media>
+  _ComposeMediaHelper(int64_t req_id,
+                      const std::vector<std::string> &media_types,
+                      const std::vector<int64_t> &media_ids,
+                      const std::map<std::string, std::string> &carrier);
+  int64_t
+  _ComposeUniqueIdHelper(int64_t req_id, PostType::type post_type,
+                         const std::map<std::string, std::string> &carrier);
 };
 
 ComposePostHandler::ComposePostHandler(
@@ -371,15 +375,19 @@ void ComposePostHandler::ComposePost(
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
+  START_SPAN(text_future, span);
   auto text_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeTextHelper,
                  this, req_id, text, writer_text_map);
+  START_SPAN(creator_future, span);
   auto creator_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeCreaterHelper,
                  this, req_id, user_id, username, writer_text_map);
+  START_SPAN(media_future, span);
   auto media_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeMediaHelper,
                  this, req_id, media_types, media_ids, writer_text_map);
+  START_SPAN(unique_id_future, span);
   auto unique_id_future = std::async(
       std::launch::async, &ComposePostHandler::_ComposeUniqueIdHelper, this,
       req_id, post_type, writer_text_map);
@@ -393,9 +401,13 @@ void ComposePostHandler::ComposePost(
   // try
   // {
   post.post_id = unique_id_future.get();
+  FINISH_SPAN(unique_id_future);
   post.creator = creator_future.get();
+  FINISH_SPAN(creator_future);
   post.media = media_future.get();
+  FINISH_SPAN(media_future);
   auto text_return = text_future.get();
+  FINISH_SPAN(text_future);
   post.text = text_return.text;
   post.urls = text_return.urls;
   post.user_mentions = text_return.user_mentions;
@@ -412,26 +424,32 @@ void ComposePostHandler::ComposePost(
     user_mention_ids.emplace_back(item.user_id);
   }
 
-  //In mixed workloed condition, need to make sure _UploadPostHelper execute
-  //Before _UploadUserTimelineHelper and _UploadHomeTimelineHelper.
-  //Change _UploadUserTimelineHelper and _UploadHomeTimelineHelper to deferred.
-  //To let them start execute after post_future.get() return.
+  // In mixed workloed condition, need to make sure _UploadPostHelper execute
+  // Before _UploadUserTimelineHelper and _UploadHomeTimelineHelper.
+  // Change _UploadUserTimelineHelper and _UploadHomeTimelineHelper to deferred.
+  // To let them start execute after post_future.get() return.
+  START_SPAN(post_future, span);
   auto post_future =
       std::async(std::launch::async, &ComposePostHandler::_UploadPostHelper,
                  this, req_id, post, writer_text_map);
+  START_SPAN(user_timeline_future, span);
   auto user_timeline_future = std::async(
-      std::launch::deferred, &ComposePostHandler::_UploadUserTimelineHelper, this,
-      req_id, post.post_id, user_id, timestamp, writer_text_map);
+      std::launch::deferred, &ComposePostHandler::_UploadUserTimelineHelper,
+      this, req_id, post.post_id, user_id, timestamp, writer_text_map);
+  START_SPAN(home_timeline_future, span);
   auto home_timeline_future = std::async(
-      std::launch::deferred, &ComposePostHandler::_UploadHomeTimelineHelper, this,
-      req_id, post.post_id, user_id, timestamp, user_mention_ids,
+      std::launch::deferred, &ComposePostHandler::_UploadHomeTimelineHelper,
+      this, req_id, post.post_id, user_id, timestamp, user_mention_ids,
       writer_text_map);
 
   // try
   // {
   post_future.get();
+  FINISH_SPAN(post_future);
   user_timeline_future.get();
+  FINISH_SPAN(user_timeline_future);
   home_timeline_future.get();
+  FINISH_SPAN(home_timeline_future);
   // }
   // catch (...)
   // {
@@ -440,6 +458,6 @@ void ComposePostHandler::ComposePost(
   span->Finish();
 }
 
-}  // namespace social_network
+} // namespace social_network
 
-#endif  // SOCIAL_NETWORK_MICROSERVICES_SRC_COMPOSEPOSTSERVICE_COMPOSEPOSTHANDLER_H_
+#endif // SOCIAL_NETWORK_MICROSERVICES_SRC_COMPOSEPOSTSERVICE_COMPOSEPOSTHANDLER_H_
