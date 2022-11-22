@@ -434,14 +434,19 @@ void ComposePostHandler::ComposePost(
   // Change _UploadUserTimelineHelper and _UploadHomeTimelineHelper to deferred.
   // To let them start execute after post_future.get() return.
   START_SPAN(post_future, span);
+  opentracing::Tracer::Global()->Inject(post_future_span->context(), writer);
   auto post_future =
       std::async(std::launch::async, &ComposePostHandler::_UploadPostHelper,
                  this, req_id, post, writer_text_map);
   START_SPAN(user_timeline_future, span);
+  opentracing::Tracer::Global()->Inject(user_timeline_future_span->context(),
+                                        writer);
   auto user_timeline_future = std::async(
       std::launch::deferred, &ComposePostHandler::_UploadUserTimelineHelper,
       this, req_id, post.post_id, user_id, timestamp, writer_text_map);
   START_SPAN(home_timeline_future, span);
+  opentracing::Tracer::Global()->Inject(home_timeline_future_span->context(),
+                                        writer);
   auto home_timeline_future = std::async(
       std::launch::deferred, &ComposePostHandler::_UploadHomeTimelineHelper,
       this, req_id, post.post_id, user_id, timestamp, user_mention_ids,
