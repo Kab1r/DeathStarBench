@@ -83,7 +83,6 @@ void UrlShortenHandler::ComposeUrls(
 
   std::vector<Url> target_urls;
   std::future<void> mongo_future;
-  DECLARE_SPAN(mongo_future);
 
   if (!urls.empty()) {
     for (auto &url : urls) {
@@ -114,7 +113,7 @@ void UrlShortenHandler::ComposeUrls(
 
       auto mongo_span = opentracing::Tracer::Global()->StartSpan(
           "url_mongo_insert_client",
-          {opentracing::ChildOf(&mongo_future_inner_span->context())});
+          {opentracing::ChildOf(&span->context())});
 
       mongoc_bulk_operation_t *bulk;
       bson_t *doc;

@@ -94,7 +94,6 @@ void SocialGraphHandler::Follow(
 
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
-                   mongo_update_follower_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
@@ -127,7 +126,7 @@ void SocialGraphHandler::Follow(
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "mongo_update_client",
             {opentracing::ChildOf(
-                &mongo_update_follower_future_span->context())});
+                &span->context())});
         bool updated = mongoc_collection_find_and_modify(
             collection, search_not_exist, nullptr, update, nullptr, false,
             false, true, &reply, &error);
@@ -154,7 +153,6 @@ void SocialGraphHandler::Follow(
 
   std::future<void> mongo_update_followee_future =
       std::async(std::launch::async, [&]() {
-                   mongo_update_followee_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
@@ -185,7 +183,7 @@ void SocialGraphHandler::Follow(
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_update_client",
             {opentracing::ChildOf(
-                &mongo_update_followee_future_inner_span->context())});
+                &span->context())});
         bson_t reply;
         bool updated = mongoc_collection_find_and_modify(
             collection, search_not_exist, nullptr, update, nullptr, false,
@@ -214,7 +212,7 @@ void SocialGraphHandler::Follow(
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
-        {opentracing::ChildOf(&redis_update_future_span->context())});
+        {opentracing::ChildOf(&span->context())});
 
     {
       if (_redis_client_pool) {
@@ -280,7 +278,6 @@ void SocialGraphHandler::Unfollow(
 
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
-                   mongo_update_follower_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
@@ -309,7 +306,7 @@ void SocialGraphHandler::Unfollow(
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_delete_client",
             {opentracing::ChildOf(
-                &mongo_update_follower_future_inner_span->context())});
+                &span->context())});
         bool updated = mongoc_collection_find_and_modify(
             collection, query, nullptr, update, nullptr, false, false, true,
             &reply, &error);
@@ -336,7 +333,6 @@ void SocialGraphHandler::Unfollow(
 
   std::future<void> mongo_update_followee_future =
       std::async(std::launch::async, [&]() {
-                   mongo_update_followee_future_span);
         mongoc_client_t *mongodb_client =
             mongoc_client_pool_pop(_mongodb_client_pool);
         if (!mongodb_client) {
@@ -365,7 +361,7 @@ void SocialGraphHandler::Unfollow(
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_delete_client",
             {opentracing::ChildOf(
-                &mongo_update_followee_future_inner_span->context())});
+                &span->context())});
         bool updated = mongoc_collection_find_and_modify(
             collection, query, nullptr, update, nullptr, false, false, true,
             &reply, &error);
@@ -393,7 +389,7 @@ void SocialGraphHandler::Unfollow(
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
-        {opentracing::ChildOf(&redis_update_future_span->context())});
+        {opentracing::ChildOf(&span->context())});
     {
       if (_redis_client_pool) {
         auto pipe = _redis_client_pool->pipeline(false);
