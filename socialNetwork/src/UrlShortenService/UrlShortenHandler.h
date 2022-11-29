@@ -93,16 +93,13 @@ void UrlShortenHandler::ComposeUrls(
       target_urls.emplace_back(new_target_url);
     }
 
-    START_EXISTING_SPAN(mongo_future, span);
     mongo_future = std::async(std::launch::async, [&]() {
-      START_SPAN(mongo_future_inner, mongo_future_span);
       mongoc_client_t *mongodb_client =
           mongoc_client_pool_pop(_mongodb_client_pool);
       if (!mongodb_client) {
         ServiceException se;
         se.errorCode = ErrorCode::SE_MONGODB_ERROR;
         se.message = "Failed to pop a client from MongoDB pool";
-        FINISH_SPAN(mongo_future_inner);
         throw se;
       }
       auto collection = mongoc_client_get_collection(
@@ -112,7 +109,6 @@ void UrlShortenHandler::ComposeUrls(
         se.errorCode = ErrorCode::SE_MONGODB_ERROR;
         se.message = "Failed to create collection user from DB user";
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
-        FINISH_SPAN(mongo_future_inner);
         throw se;
       }
 
@@ -144,7 +140,6 @@ void UrlShortenHandler::ComposeUrls(
         mongoc_bulk_operation_destroy(bulk);
         mongoc_collection_destroy(collection);
         mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
-        FINISH_SPAN(mongo_future_inner);
         throw se;
       }
       bson_destroy(&reply);
@@ -152,14 +147,12 @@ void UrlShortenHandler::ComposeUrls(
       mongoc_collection_destroy(collection);
       mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
       mongo_span->Finish();
-      FINISH_SPAN(mongo_future_inner);
     });
   }
 
   if (!urls.empty()) {
     try {
       mongo_future.get();
-      FINISH_SPAN(mongo_future);
     } catch (...) {
       LOG(error) << "Failed to upload shortened urls from MongoDB";
       throw;
