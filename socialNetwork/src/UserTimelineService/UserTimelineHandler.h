@@ -319,7 +319,9 @@ void UserTimelineHandler::ReadUserTimeline(
   }
 
   try {
+    START_SPAN(post_future_get, span);
     _return = post_future.get();
+    FINISH_SPAN(post_future_get);
     FINISH_SPAN(post_future);
   } catch (...) {
     LOG(error) << "Failed to get post from post-storage-service";

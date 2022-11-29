@@ -136,7 +136,9 @@ void TextHandler::ComposeText(
 
   std::vector<Url> target_urls;
   try {
+    START_SPAN(shortened_urls_future_get, span);
     target_urls = shortened_urls_future.get();
+    FINISH_SPAN(shortened_urls_future_get);
     FINISH_SPAN(shortened_urls_future);
   } catch (...) {
     LOG(error) << "Failed to get shortened urls from url-shorten-service";
@@ -145,7 +147,9 @@ void TextHandler::ComposeText(
 
   std::vector<UserMention> user_mentions;
   try {
+    START_SPAN(user_mention_future_get, span);
     user_mentions = user_mention_future.get();
+    FINISH_SPAN(user_mention_future_get);
     FINISH_SPAN(user_mention_future);
   } catch (...) {
     LOG(error) << "Failed to upload user mentions to user-mention-service";

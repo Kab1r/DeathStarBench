@@ -405,13 +405,21 @@ void ComposePostHandler::ComposePost(
 
   // try
   // {
+  START_SPAN(unique_id_future_get, span);
   post.post_id = unique_id_future.get();
+  FINISH_SPAN(unique_id_future_get);
   FINISH_SPAN(unique_id_future);
+  START_SPAN(creator_future_get, span);
   post.creator = creator_future.get();
+  FINISH_SPAN(creator_future_get);
   FINISH_SPAN(creator_future);
+  START_SPAN(media_future_get, span);
   post.media = media_future.get();
+  FINISH_SPAN(media_future_get);
   FINISH_SPAN(media_future);
+  START_SPAN(text_future_get, span);
   auto text_return = text_future.get();
+  FINISH_SPAN(text_future_get);
   FINISH_SPAN(text_future);
   post.text = text_return.text;
   post.urls = text_return.urls;
@@ -454,11 +462,17 @@ void ComposePostHandler::ComposePost(
 
   // try
   // {
+  START_SPAN(post_future_get, span);
   post_future.get();
+  FINISH_SPAN(post_future_get);
   FINISH_SPAN(post_future);
+  START_SPAN(user_timeline_future_get, span);
   user_timeline_future.get();
+  FINISH_SPAN(user_timeline_future_get);
   FINISH_SPAN(user_timeline_future);
+  START_SPAN(home_timeline_future_get, span);
   home_timeline_future.get();
+  FINISH_SPAN(home_timeline_future_get);
   FINISH_SPAN(home_timeline_future);
   // }
   // catch (...)

@@ -830,9 +830,13 @@ void SocialGraphHandler::FollowWithUsername(
   int64_t user_id;
   int64_t followee_id;
   try {
+    START_SPAN(user_id_future_get, span);
     user_id = user_id_future.get();
+    FINISH_SPAN(user_id_future_get);
     FINISH_SPAN(user_id_future);
+    START_SPAN(followee_id_future_get, span);
     followee_id = followee_id_future.get();
+    FINISH_SPAN(followee_id_future_get);
     FINISH_SPAN(followee_id_future);
   } catch (const std::exception &e) {
     LOG(warning) << e.what();
@@ -916,9 +920,13 @@ void SocialGraphHandler::UnfollowWithUsername(
   int64_t user_id;
   int64_t followee_id;
   try {
+    START_SPAN(user_id_future_get, span);
     user_id = user_id_future.get();
+    FINISH_SPAN(user_id_future_get);
     FINISH_SPAN(user_id_future);
+    START_SPAN(followee_id_future_get, span);
     followee_id = followee_id_future.get();
+    FINISH_SPAN(followee_id_future_get);
     FINISH_SPAN(followee_id_future);
   } catch (...) {
     throw;
