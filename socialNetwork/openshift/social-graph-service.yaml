@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: social-graph-service
-        image: ghcr.io/kab1r/deathstarbench/social-network-microservices
+        image: ghcr.io/sluglab/deathstarbench/social-network-microservices
         command: ["SocialGraphService"]
         volumeMounts:
           - mountPath: /social-network-microservices/config/jaeger-config.yml

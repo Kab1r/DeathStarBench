@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: write-home-timeline-service
-        image: ghcr.io/kab1r/deathstarbench/social-network-microservices
+        image: ghcr.io/sluglab/deathstarbench/social-network-microservices
         command: ["WriteHomeTimelineService"]
         volumeMounts:
           - mountPath: /social-network-microservices/config/jaeger-config.yml

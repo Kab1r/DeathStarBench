@@ -7,7 +7,7 @@ ports:
 container:
   command: UrlShortenService
   dockerRegistry: ghcr.io
-  image: kab1r/deathstarbench/social-network-microservices
+  image: sluglab/deathstarbench/social-network-microservices
   name: url-shorten-service
   ports: 
   - containerPort: 9090

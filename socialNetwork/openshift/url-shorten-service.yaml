@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: url-shorten-service
-        image: ghcr.io/kab1r/deathstarbench/social-network-microservices
+        image: ghcr.io/sluglab/deathstarbench/social-network-microservices
         command: ["UrlShortenService"]
         volumeMounts:
           - mountPath: /social-network-microservices/config/jaeger-config.yml
