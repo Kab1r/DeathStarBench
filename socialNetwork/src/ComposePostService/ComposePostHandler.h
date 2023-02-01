@@ -456,15 +456,9 @@ void ComposePostHandler::ComposePost(
   auto post_future =
       std::async(std::launch::async, &ComposePostHandler::_UploadPostHelper,
                  this, req_id, post, writer_text_map);
-  START_SPAN(user_timeline_future, span);
-  opentracing::Tracer::Global()->Inject(user_timeline_future_span->context(),
-                                        writer);
   auto user_timeline_future = std::async(
       std::launch::deferred, &ComposePostHandler::_UploadUserTimelineHelper,
       this, req_id, post.post_id, user_id, timestamp, writer_text_map);
-  START_SPAN(home_timeline_future, span);
-  opentracing::Tracer::Global()->Inject(home_timeline_future_span->context(),
-                                        writer);
   auto home_timeline_future = std::async(
       std::launch::deferred, &ComposePostHandler::_UploadHomeTimelineHelper,
       this, req_id, post.post_id, user_id, timestamp, user_mention_ids,
@@ -476,13 +470,11 @@ void ComposePostHandler::ComposePost(
   post_future.get();
   FINISH_SPAN(post_future_get);
   FINISH_SPAN(post_future);
-  START_SPAN(user_timeline_future_get, span);
+  START_SPAN(user_timeline_future, span);
   user_timeline_future.get();
-  FINISH_SPAN(user_timeline_future_get);
   FINISH_SPAN(user_timeline_future);
-  START_SPAN(home_timeline_future_get, span);
+  START_SPAN(home_timeline_future, span);
   home_timeline_future.get();
-  FINISH_SPAN(home_timeline_future_get);
   FINISH_SPAN(home_timeline_future);
   // }
   // catch (...)
