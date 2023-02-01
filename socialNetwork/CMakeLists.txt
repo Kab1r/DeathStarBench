@@ -10,4 +10,6 @@ add_subdirectory(src)
 #add_subdirectory(test)
 #enable_testing()
 
-
+# add_definitions(-DISOLATE_COMPOSE_POST)
+# add_definitions(-DISOLATE_TEXT_HANDLER)
+# add_definitions(-DISOLATE_USER_TIMELINE)

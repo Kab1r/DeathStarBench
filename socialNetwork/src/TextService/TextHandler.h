@@ -1,6 +1,12 @@
 #ifndef SOCIAL_NETWORK_MICROSERVICES_TEXTHANDLER_H
 #define SOCIAL_NETWORK_MICROSERVICES_TEXTHANDLER_H
 
+#ifdef ISOLATE_TEXT_HANDLER
+#define ISOLATBLE_RPC(rpc)
+#else
+#define ISOLATBLE_RPC(rpc) rpc
+#endif
+
 #include <future>
 #include <iostream>
 #include <regex>
@@ -90,7 +96,8 @@ void TextHandler::ComposeText(
     std::vector<Url> _return_urls;
     auto url_client = url_client_wrapper->GetClient();
     try {
-      url_client->ComposeUrls(_return_urls, req_id, urls, url_writer_text_map);
+      ISOLATBLE_RPC(url_client->ComposeUrls(_return_urls, req_id, urls,
+                                            url_writer_text_map);)
     } catch (...) {
       LOG(error) << "Failed to upload urls to url-shorten-service";
       _url_client_pool->Remove(url_client_wrapper);
@@ -121,9 +128,9 @@ void TextHandler::ComposeText(
     std::vector<UserMention> _return_user_mentions;
     auto user_mention_client = user_mention_client_wrapper->GetClient();
     try {
-      user_mention_client->ComposeUserMentions(_return_user_mentions, req_id,
-                                               mention_usernames,
-                                               user_mention_writer_text_map);
+      ISOLATBLE_RPC(user_mention_client->ComposeUserMentions(
+          _return_user_mentions, req_id, mention_usernames,
+          user_mention_writer_text_map);)
     } catch (...) {
       LOG(error) << "Failed to upload user_mentions to user-mention-service";
       _user_mention_client_pool->Remove(user_mention_client_wrapper);

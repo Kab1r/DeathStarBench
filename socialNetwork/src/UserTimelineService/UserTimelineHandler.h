@@ -1,6 +1,12 @@
 #ifndef SOCIAL_NETWORK_MICROSERVICES_SRC_USERTIMELINESERVICE_USERTIMELINEHANDLER_H_
 #define SOCIAL_NETWORK_MICROSERVICES_SRC_USERTIMELINESERVICE_USERTIMELINEHANDLER_H_
 
+#ifdef ISOLATE_USER_TIMELINE
+#define ISOLATBLE_RPC(rpc)
+#else
+#define ISOLATBLE_RPC(rpc) rpc
+#endif
+
 #include <bson/bson.h>
 #include <mongoc.h>
 #include <sw/redis++/redis++.h>
@@ -284,8 +290,8 @@ void UserTimelineHandler::ReadUserTimeline(
         std::vector<Post> _return_posts;
         auto post_client = post_client_wrapper->GetClient();
         try {
-          post_client->ReadPosts(_return_posts, req_id, post_ids,
-                                 writer_text_map);
+          ISOLATBLE_RPC(post_client->ReadPosts(_return_posts, req_id, post_ids,
+                                               writer_text_map);)
         } catch (...) {
           _post_client_pool->Remove(post_client_wrapper);
           LOG(error) << "Failed to read posts from post-storage-service";
