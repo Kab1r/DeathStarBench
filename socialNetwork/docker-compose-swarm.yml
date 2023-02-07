@@ -34,7 +34,7 @@ services:
         condition: any
     command: ["ComposePostService"]
     hostname: compose-post-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -60,7 +60,7 @@ services:
         condition: any
     command: ["HomeTimelineService"]
     hostname: home-timeline-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -116,7 +116,7 @@ services:
         condition: any
     command: ["MediaService"]
     hostname: media-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -177,7 +177,7 @@ services:
         condition: any
     command: ["PostStorageService"]
     hostname: post-storage-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -216,7 +216,7 @@ services:
         condition: any
     command: ["SocialGraphService"]
     hostname: social-graph-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -231,7 +231,7 @@ services:
         condition: any
     command: ["TextService"]
     hostname: text-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -246,7 +246,7 @@ services:
         condition: any
     command: ["UniqueIdService"]
     hostname: unique-id-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -286,7 +286,7 @@ services:
         condition: any
     command: ["UrlShortenService"]
     hostname: url-shorten-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -313,7 +313,7 @@ services:
         condition: any
     command: ["UserMentionService"]
     hostname: user-mention-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -341,7 +341,7 @@ services:
         condition: any
     command: ["UserService"]
     hostname: user-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
@@ -379,7 +379,7 @@ services:
         condition: any
     command: ["UserTimelineService"]
     hostname: user-timeline-service
-    image: ghcr.io/sluglab/deathstarbench/social-network-microservices:latest
+    image: ghcr.io/kab1r/deathstarbench/social-network-microservices:latest
     volumes:
       - ./config:/social-network-microservices/config
 
