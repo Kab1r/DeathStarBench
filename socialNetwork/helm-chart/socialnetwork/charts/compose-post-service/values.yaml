@@ -7,7 +7,7 @@ ports:
 container:
   command: ComposePostService
   dockerRegistry: ghcr.io
-  image: sluglab/deathstarbench/social-network-microservices
+  image: kab1r/deathstarbench/social-network-microservices
   name: compose-post-service
   ports: 
   - containerPort: 9090

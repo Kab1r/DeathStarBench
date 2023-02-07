@@ -7,7 +7,7 @@ ports:
 container:
   command: PostStorageService
   dockerRegistry: ghcr.io
-  image: sluglab/deathstarbench/social-network-microservices
+  image: kab1r/deathstarbench/social-network-microservices
   name: post-storage-service
   ports: 
   - containerPort: 9090

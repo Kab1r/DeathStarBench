@@ -7,7 +7,7 @@ ports:
 container:
   command: UserTimelineService
   dockerRegistry: ghcr.io
-  image: sluglab/deathstarbench/social-network-microservices
+  image: kab1r/deathstarbench/social-network-microservices
   name: user-timeline-service
   ports: 
   - containerPort: 9090

@@ -7,7 +7,7 @@ ports:
 container:
   command: UserService
   dockerRegistry: ghcr.io
-  image: sluglab/deathstarbench/social-network-microservices
+  image: kab1r/deathstarbench/social-network-microservices
   name: user-service
   ports: 
   - containerPort: 9090

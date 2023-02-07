@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: post-storage-service
-        image: ghcr.io/sluglab/deathstarbench/social-network-microservices
+        image: ghcr.io/kab1r/deathstarbench/social-network-microservices
         command: ["PostStorageService"]
         ports:
         - containerPort: 9090
